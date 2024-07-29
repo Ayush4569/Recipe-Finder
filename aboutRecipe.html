@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button class="backBtn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <button id="printRecipe" class="secondaryBtn">Print All Details</button>
+    <div id="recipeDetails"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const index = params.get("index");
+        let recipes = JSON.parse(localStorage.getItem("recipes"));
+        const recipe = recipes[index];
+        if (index && index != null) {
+          const recipeDetailsDiv = document.getElementById("recipeDetails");
+          let healthContent = "";
+          recipe.healthLabels.forEach((elem) => {
+            healthContent += `<p>${elem}</p>`;
+          });
+          let Nutrients = "";
+          const arrayOfNutrients = Object.values(recipe.totalNutrients);
+          arrayOfNutrients.forEach((elem) => {
+            Nutrients += `<p>${elem.label}:${Math.floor(elem.quantity)} </p>`;
+          });
+          recipeDetailsDiv.innerHTML = `
+          <div class='recipeContent'>
+          <div class='img'>
+            <img src="${recipe.image}" alt="Recipe Image">
+            </div>
+            <div class="recipeDets">
+              <h2>${recipe.label}</h2>
+              <div>
+                <span class='brdr'>Category:${recipe.dishType} </span>
+                <span>Serves: ${recipe.yield}</span>
+                 </div>
+                 <div>
+                  <span class='brdr'>Calories: ${Math.floor(
+                    recipe.calories
+                  )} cal</span>
+                  <span>Total Dish Weight: ${Math.floor(
+                    recipe.totalWeight
+                  )} gm</span>
+                   </div>
+             </div>
+             <button id="toggleFavorite" class="secondaryBtn">Mark as Favorite</button>
+             </div>
+             <div class="nutritionHealth">
+              <div class="left">
+                <div class="ingredients">
+                  <h3> HealthLabels </h3>  
+                  <div class="ingreCont"> 
+                    ${healthContent}
+                    </div>
+                  </div>
+                </div>
+              <div class="middle">
+                <div class="ingredients">
+                  <h3> Total Nutrients </h3>  
+                  <div class="ingreCont"> 
+                    ${Nutrients}
+                    </div>
+                  </div>
+                </div>
+      <div class="right">
+        <div class="ingredients">
+          <h3>Ingredients </h3>
+          <div class="ingreCont">
+            ${recipe.ingredients
+              .map(
+                (ingredient) => `
+    <label>
+      <span class="spantxt">${ingredient.text}</span>
+    </label>
+  `
+              )
+              .join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ratingbox">
+      <div class="starbox">
+      <h2> Rate this recipe</h2>
+      <div class="stars">
+      <i class="fa-solid fa-star"></i>
+      <i class="fa-solid fa-star"></i>
+      <i class="fa-solid fa-star"></i>
+      <i class="fa-solid fa-star"></i>
+      <i class="fa-solid fa-star"></i> 
+     </div>
+     </div>
+     </div>
+          `;
+        } else {
+          document.getElementById("recipeDetails").innerText =
+            "Recipe not found.";
+        }
+        document
+          .getElementById("printRecipe")
+          .addEventListener("click", function () {
+            window.print();
+          });
+
+        // Add to favorites section
+        let favoritesRecipe =
+          JSON.parse(localStorage.getItem("favorites")) || [];
+        let favoritesBtn = document.querySelector("#toggleFavorite");
+        const updateFavoritesButton = () => {
+          if (
+            favoritesRecipe.some(
+              (fav) => fav.label.toLowerCase() == recipe.label.toLowerCase()
+            )
+          ) {
+            favoritesBtn.textContent = "Remove from Favorites";
+            favoritesBtn.style.backgroundColor = "red";
+          } else {
+            favoritesBtn.textContent = "Mark as Favorites";
+            favoritesBtn.style.backgroundColor = "green";
+          }
+        };
+        favoritesBtn.addEventListener("click", () => {
+          if (
+            favoritesRecipe.some(
+              (fav) => fav.label.toLowerCase() == recipe.label.toLowerCase()
+            )
+          ) {
+            favoritesRecipe = favoritesRecipe.filter(
+              (fav) => fav.label.toLowerCase() !== recipe.label.toLowerCase()
+            );
+          } else {
+            favoritesRecipe.push(recipe);
+          }
+          localStorage.setItem("favorites", JSON.stringify(favoritesRecipe));
+          updateFavoritesButton();
+        });
+
+        updateFavoritesButton();
+        // Ratings section
+        let stars = document.querySelectorAll(".stars i");
+        let ratings = localStorage.getItem(`ratings-${index}`);
+        if (ratings) {
+          setRating(parseInt(ratings));
+        }
+        stars.forEach((star, index) => {
+          star.addEventListener("click", () => {
+            setRating(index + 1);
+            localStorage.setItem(`ratings-${index}`, index + 1);
+          });
+        });
+        function setRating(ratings) {
+          stars.forEach((star, index2) => {
+            if (index2 < ratings) {
+              star.classList.add("active");
+            } else {
+              star.classList.remove("active");
+            }
+          });
+        }
+        // Back to results
+        document.querySelector(".backBtn i").addEventListener("click", () => {
+          window.history.back();
+        });
+      });
+    </script>
+  </body>
+</html>
